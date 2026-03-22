@@ -92,64 +92,51 @@ for model in [model1, model2, model3]:
     )
     histories.append(history)
 
+fig, axs = plt.subplots(1, 3, figsize=(18,5))
+
+colores = ['blue', 'green', 'red']
 
 # Curvas de pérdida
-plt.figure()
-
 for i, history in enumerate(histories):
-    plt.plot(history.history['loss'], label=f'Modelo {i+1} Entrenamiento')
-    plt.plot(history.history['val_loss'], linestyle='--', label=f'Modelo {i+1} Validación')
+    axs[0].plot(history.history['loss'], color=colores[i], label=f'Modelo {i+1} Train')
+    axs[0].plot(history.history['val_loss'], linestyle='--', color=colores[i], label=f'Modelo {i+1} Val')
 
-plt.title("Curvas de pérdida")
-plt.legend()
-plt.show()
+axs[0].set_title("Pérdida")
+axs[0].set_xlabel("Épocas")
+axs[0].set_ylabel("Loss")
+axs[0].legend()
 
 
 # Curvas de exactitud
-plt.figure()
-
 for i, history in enumerate(histories):
-    plt.plot(history.history['accuracy'], label=f'Modelo {i+1} Entrenamiento')
-    plt.plot(history.history['val_accuracy'], linestyle='--', label=f'Modelo {i+1} Validación')
+    axs[1].plot(history.history['accuracy'], color=colores[i], label=f'Modelo {i+1} Train')
+    axs[1].plot(history.history['val_accuracy'], linestyle='--', color=colores[i], label=f'Modelo {i+1} Val')
 
-plt.title("Curvas de exactitud")
-plt.legend()
-plt.show()
-
-
-# Evaluación de modelos
-for i, model in enumerate([model1, model2, model3]):
-    print(f"\nModelo {i+1}")
-
-    y_pred = model.predict(X_test)
-    y_pred_classes = np.argmax(y_pred, axis=1)
-    y_true = np.argmax(y_test, axis=1)
-
-    print("Matriz de confusión:")
-    print(confusion_matrix(y_true, y_pred_classes))
-
-    print("\nReporte de clasificación:")
-    print(classification_report(y_true, y_pred_classes))
-
-    print("ROC-AUC:", roc_auc_score(y_test, y_pred, multi_class='ovr'))
-    print("PR-AUC:", average_precision_score(y_test, y_pred))
+axs[1].set_title("Exactitud")
+axs[1].set_xlabel("Épocas")
+axs[1].set_ylabel("Accuracy")
+axs[1].legend()
 
 
-# Curvas ROC multiclase
+# Curvas ROC (solo una por modelo para limpiar)
 from sklearn.metrics import roc_curve
+from sklearn.preprocessing import label_binarize
 
 y_true = np.argmax(y_test, axis=1)
-y_test_bin = label_binarize(y_true, classes=[0, 1, 2])
-
-plt.figure()
+y_test_bin = label_binarize(y_true, classes=[0,1,2])
 
 for i, model in enumerate([model1, model2, model3]):
     y_pred = model.predict(X_test)
+    
+    # Solo clase 0 para simplificar visualmente
+    fpr, tpr, _ = roc_curve(y_test_bin[:, 0], y_pred[:, 0])
+    axs[2].plot(fpr, tpr, color=colores[i], label=f'Modelo {i+1}')
 
-    for j in range(3):
-        fpr, tpr, _ = roc_curve(y_test_bin[:, j], y_pred[:, j])
-        plt.plot(fpr, tpr, label=f'Modelo {i+1} Clase {j}')
+axs[2].set_title("ROC (Clase 0)")
+axs[2].set_xlabel("FPR")
+axs[2].set_ylabel("TPR")
+axs[2].legend()
 
-plt.title("Curvas ROC multiclase")
-plt.legend()
+
+plt.tight_layout()
 plt.show()
